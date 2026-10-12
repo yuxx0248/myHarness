@@ -23,10 +23,10 @@ else
 fi
 
 # core §11 和 skill 里引用的框架内路径必须存在
-missing=$(grep -rhoE 'playbooks/[A-Za-z0-9_./-]+\.md' "$ROOT/core" "$ROOT/skills" "$ROOT/adapters" \
+missing=$(grep -rhoE '(playbooks|kit)/[A-Za-z0-9_./-]+\.(md|py|sh|yaml)' "$ROOT/core" "$ROOT/skills" "$ROOT/adapters" "$ROOT/playbooks" "$ROOT/AGENTS.md" \
   | sort -u | while read -r p; do [ -f "$ROOT/$p" ] || echo "$p"; done || true)
 if [ -n "$missing" ]; then echo "✗ 引用了不存在的文件："; echo "$missing" | sed 's/^/    /'; fail=1
-else echo "✓ 框架内引用的 playbook 路径都存在"; fi
+else echo "✓ 框架内引用的 playbook / kit 路径都存在"; fi
 
 # 每个 skill 都要有 name + description frontmatter，且 name 与目录名一致
 for f in "$ROOT"/skills/*/SKILL.md; do
@@ -37,6 +37,13 @@ for f in "$ROOT"/skills/*/SKILL.md; do
 done
 echo "✓ skill frontmatter 检查完毕"
 
+# kit 离线测试（stub 后端，不调用真实模型）
+if out=$(cd "$ROOT" && AGENT_LLM_BACKEND=stub python3 -m unittest discover -s kit/tests 2>&1); then
+  echo "✓ kit 测试通过（$(echo "$out" | grep -oE 'Ran [0-9]+ tests')）"
+else
+  echo "✗ kit 测试失败："; echo "$out" | tail -20 | sed 's/^/    /'; fail=1
+fi
+
 # 领域泄漏
 terms_files=()
 for f in "$HOME"/.agents/packs/*/leak-terms.txt; do [ -f "$f" ] && terms_files+=("$f"); done
@@ -45,14 +52,14 @@ if [ ${#terms_files[@]} -eq 0 ]; then
   echo "· 没有找到任何 pack 的 leak-terms.txt，跳过领域泄漏检查"
 else
   pattern=$(cat "${terms_files[@]}" | sed -e 's/#.*//' -e 's/[[:space:]]*$//' | grep -v '^$' | sort -u | paste -sd'|' -)
-  hits=$(grep -rniE "$pattern" "$ROOT" --include='*.md' --include='*.sh' --exclude-dir=dist --exclude-dir=.git || true)
+  hits=$(grep -rniE "$pattern" "$ROOT" --include='*.md' --include='*.sh' --include='*.py' --include='*.yaml' --include='*.tmpl' --include='*.json' --exclude-dir=dist --exclude-dir=.git || true)
   if [ -n "$hits" ]; then echo "✗ 框架里混进了领域内容："; echo "$hits" | cut -c1-160 | sed 's/^/    /'; fail=1
   else echo "✓ 没有领域泄漏（检查了 ${#terms_files[@]} 个 pack 的词表）"; fi
 fi
 
 # 密钥扫描（结构化密钥的常见形态）
 secret_re='AKIA[0-9A-Z]{16}|LTAI[0-9A-Za-z]{12,}|sk-[A-Za-z0-9]{20,}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abp]-[0-9A-Za-z-]{10,}'
-hits=$(grep -rnoE "$secret_re" "$ROOT" --include='*.md' --include='*.sh' --include='*.json' --include='*.yaml' || true)
+hits=$(grep -rnoE "$secret_re" "$ROOT" --include='*.md' --include='*.sh' --include='*.json' --include='*.yaml' --include='*.py' --include='*.tmpl' --exclude-dir=.git || true)
 if [ -n "$hits" ]; then echo "✗ 发现疑似密钥："; echo "$hits" | cut -c1-120 | sed 's/^/    /'; fail=1
 else echo "✓ 没有发现疑似密钥"; fi
 

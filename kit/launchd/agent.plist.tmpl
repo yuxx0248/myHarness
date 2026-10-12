@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 由 kit/launchd/install.sh 渲染，不要手改生成后的 plist -->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>__LABEL__</string>
+	<!-- StartCalendarInterval 而不是 StartInterval：睡眠期间错过的触发会在唤醒后补跑 -->
+	<key>StartCalendarInterval</key>
+	<array>
+__MINUTES__
+	</array>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/bash</string>
+		<string>-lc</string>
+		<string>__CMD__</string>
+	</array>
+	<!-- 绝不放 ~/Documents：TCC 会拦 launchd（「自动必挂、手动必成」） -->
+	<key>WorkingDirectory</key>
+	<string>__HOME__/Library/Application Support/__NAME__</string>
+	<key>StandardOutPath</key>
+	<string>__HOME__/Library/Logs/__NAME__/launchd.out.log</string>
+	<key>StandardErrorPath</key>
+	<string>__HOME__/Library/Logs/__NAME__/launchd.err.log</string>
+	<!-- 会派生后台子进程的任务需要这个，否则 launchd 会把子进程一起杀掉 -->
+	<key>AbandonProcessGroup</key>
+	<true/>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<!-- launchd 不读 zshrc：要用的环境变量都写在这里 -->
+		<key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:__HOME__/.local/bin:/usr/bin:/bin</string>
+		<key>HOME</key><string>__HOME__</string>
+		<!-- headless 的 claude 靠 USER/LOGNAME 读 keychain 登录态；缺了会报 Not logged in -->
+		<key>USER</key><string>__USER__</string>
+		<key>LOGNAME</key><string>__USER__</string>
+	</dict>
+</dict>
+</plist>

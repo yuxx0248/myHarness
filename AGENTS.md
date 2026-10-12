@@ -20,6 +20,7 @@
 | 「加一个领域」「换公司了」「这条太领域了」 | §5 领域 pack |
 | 「给同事 / 别人也用」 | §6 给别人用 |
 | 「agent 没按框架来」「状态卡没了」「skill 没触发」 | §7 排障 |
+| 「用这套搭个 bot」「改了规则要校准」「做个定时任务」 | `kit/README.md`（可运行骨架） |
 
 ## 2. 安装
 
@@ -101,7 +102,8 @@
    ```bash
    PACK_DIRS="<领域 pack 目录>" ~/myHarness/scripts/build.sh
    ```
-   检查项：Codex 体积上限、core / skill / adapter 里引用的 playbook 都存在、skill frontmatter、**领域泄漏**（按 pack 的 `leak-terms.txt`）、密钥。
+   检查项：Codex 体积上限、core / skill / adapter 里引用的 playbook 都存在、skill frontmatter、`kit/` 离线测试、**领域泄漏**（按 pack 的 `leak-terms.txt`）、密钥。
+   改了 `kit/` 的代码：补 / 改 `kit/tests/test_kit.py`；涉及 `llm.py` 的改动再用真实后端跑一次冒烟（一个 `triage.propose` 调用即可）。
 5. **行为回归**（改了 core 或 playbook 的判断时必做）：开一个干净的子 agent（新上下文，不带本会话的记忆），用下面的 prompt 跑 `tests/scenarios.md`，然后由你对照「期望」列判分。
    ```
    你是一个全新的 agent。关于怎么做事，你只能遵守这些文件：~/myHarness/core/AGENTS.md（常驻规则），
@@ -155,4 +157,5 @@
 | `scripts/build.sh` | 生成 `dist/codex/AGENTS.md` + 体检 |
 | `scripts/install.sh` | 安装 / 挂 pack（默认 dry-run） |
 | `tests/scenarios.md` | 行为回归场景 |
+| `kit/` | 可运行骨架：LLM 封装、规则导图、分诊、story 归并、tick、校准 harness、launchd 模板（见 `kit/README.md`） |
 | `dist/` | 生成物（不进 git） |

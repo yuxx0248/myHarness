@@ -6,6 +6,7 @@ description: 新建或修改一个自动运行的东西之前的检查单——b
 # ship-automation
 
 细节见 `~/.agents/framework/playbooks/automation.md`；权限分级见 `autonomy-and-triage.md` §6。
+可运行骨架（LLM 封装、规则导图、分诊、story 归并、tick、校准 harness、launchd）在 `~/.agents/framework/kit/`，先读 `kit/README.md`，能复用就别重写。
 
 ## 设计检查单
 - [ ] 能确定性完成的部分都是脚本，LLM 只处理输入变了的单元，每轮有上限

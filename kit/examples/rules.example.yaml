@@ -1,0 +1,149 @@
+# 规则导图示例（领域无关）。复制一份到你的 bot 仓库，按自己的领域改分支。
+# 改这份文件 = 改 bot 的行为；改完跑 kit/calib.py，连续 N 轮全新校准 0 不一致才算过。
+#
+# 一件事走完这张图：
+#   stage0 过滤（确定性，代码里执行，不调 LLM）
+#   → stage1 拆出 ask：对方到底要我交付什么
+#   → stage2 落到分类树的一个叶子（动作 › 领域 › 模式）
+#   → stage3 过闸
+#   → stage4 定档：叶子的默认 level，按 rules 从上到下第一条命中的覆盖；再给出步骤、stop_at、needs
+title: 请求分诊规则导图（示例）
+version: 1
+
+stage0_filters:   # 只是文档；真正的过滤在你的 source 适配器代码里，配真实历史数据的单测
+- id: F1_bot
+  rule: 发送者是 bot / app
+- id: F2_self
+  rule: 发送者是我自己（我的消息只作上下文，不作触发）
+- id: F3_broadcast
+  rule: 广播（@所有人），不管有没有同时 @我
+- id: F4_owned_elsewhere
+  rule: 属于另一个自动化系统负责的渠道
+- id: F5_not_direct
+  rule: 群消息没有直接 @我
+- id: F6_no_new
+  rule: 自上次提案以来没有别人发的新消息 → 不重跑 LLM，只刷新确定性状态
+
+levels:
+  full: agent 可以独立完成，做到 stop_at，把结果交给我确认
+  partial: agent 做调查 / 起草方案，需要我确认或补判断后才能推进
+  'no': 必须我本人处理；只列出来提醒，agent 不动手
+  skip: 不处理、不提醒（只计数）
+
+gates:   # 三类：在此前停（定义 stop_at）/ 只改状态（不改 level）/ 丢弃（→ skip）
+  G1_outward:
+    name: 对外发言
+    rule: 需要在群里或给请求人回复。只给草稿，不自动回复。
+  G2_write:
+    name: 写操作
+    rule: 合并 PR、发布 / 部署、改配置、审批工单、改共享文档、改权限。agent 停在执行前。
+  G3_decision:
+    name: 口径 / 决策
+    rule: 需要定产品规则、指标口径、优先级、方案取舍、要不要接。agent 只列选项和问题。
+  G4_presence:
+    name: 本人在场 / 登录
+    rule: 需要我本人出面、扫码登录、处理个人账号或个人事务 → 通常 skip。内部会议上一起讨论方案不算。
+  G5_in_progress:
+    name: 已在处理
+    rule: 本机会话或 PR 里已经能看到在处理这件事 → 提案改成「同步进度」，不重复开工。
+  G6_resolved:
+    name: 已解决
+    rule: 上下文里已给出结论或对方确认解决 → 只把 status 标成 resolved；level 不变（level 描述这类事该怎么介入，与是否已闭环无关）。
+  G7_duplicate:
+    name: 重复
+    rule: 同一个问题在另一个更早、仍未结的单元里已经报过 → skip，指向那一条。注意：来问进度、催办、要支援不算重复。
+  G8_not_mine:
+    name: 不是我的事
+    rule: 别人负责、我只是被 cc 做备份；或者泛问别人主导的事项，不需要我做技术工作 → skip。
+  G9_ack_only:
+    name: 只需回一句
+    rule: 问的是流程或记录层面的解释，一句话能答，不需要交付任何东西 → skip。注意：问交付物本身能不能用、要帮忙推进，不算。
+  G10_notice_only:
+    name: 纯通知
+    rule: 只告诉我一个已经定好的安排，不要求回复、选择、给意见 → skip。请我选时间、预告稍后要发给我的任务，不是纯通知。
+
+branches:
+- id: B01
+  l1: 改代码上线
+  l2: 功能
+  l3: 新功能开发并上线
+  signals:
+  - 附需求文档 / 设计稿
+  - 要把某个功能做出来、对外可见
+  steps:
+  - 读需求和设计
+  - 定位仓库与分支
+  - 实现并本地自测
+  - 部署到测试环境并截图对照设计
+  - 列出需要我拍板的产品问题
+  stop_at: 开 PR / 把测试链接发给需求方之前（G1/G2）
+  needs:
+  - 仓库读写
+  - 测试环境登录态
+  level: partial
+- id: B02
+  l1: 改代码上线
+  l2: 故障
+  l3: 线上 bug 修复
+  signals:
+  - 报错、功能不可用、数字错误
+  steps:
+  - 复现
+  - 定位根因（带证据）
+  - 修复并验证
+  stop_at: 合并 / 部署之前（G2）
+  needs:
+  - 只读生产数据
+  - 仓库读写
+  level: partial
+- id: B03
+  l1: 排查诊断
+  l2: 告警
+  l3: 告警根因定位
+  signals:
+  - 告警卡片、监控截图
+  steps:
+  - 判断是否误报
+  - 分层定位根因
+  - 写调查文档
+  stop_at: 把结论发到群里之前（G1）
+  needs:
+  - 只读日志与数据
+  level: full
+  rules:
+  - if: 涉及客户可见的数字解释
+    then: partial
+- id: B04
+  l1: 开权限 / 配置
+  l2: 访问
+  l3: 标准授权工单
+  signals:
+  - 要开某个系统 / 数据的访问权限
+  steps:
+  - 确认权限范围
+  - 起草授权工单
+  stop_at: 提交工单之前（G2）
+  needs:
+  - 工单系统登录态
+  level: full
+- id: B05
+  l1: 承接 / 协调
+  l2: 新工作
+  l3: 请我接一件新事
+  signals:
+  - 「能不能帮忙做…」「这个你来负责吧」
+  steps:
+  - 记一笔，附上下文
+  stop_at: 由我决定接不接（G3）
+  level: 'no'
+- id: B06
+  l1: 盯状态
+  l2: 通用
+  l3: 等某件事完成后通知
+  signals:
+  - 「好了告诉我」「帮我盯一下」
+  steps:
+  - 注册周期检查
+  - 状态变化时通知我
+  stop_at: 通知我之后
+  level: full

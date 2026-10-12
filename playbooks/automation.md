@@ -27,6 +27,28 @@ feedback   viewer 追加 feedback.jsonl → 成为校准的标准答案
 - 水位只推进到**已处理**的最高项；扫描起点的水位在完整一轮结束后才推进。
 - 「每 N 分钟跑一轮」≠「每个对象每 N 分钟被看一次」—— 报告每个对象的实际节奏。
 - 截断策略会悄悄变成优先级策略：要显式定义优先级，而不是尾部截断后再打补丁。
+- **处理顺序：最早的先**。后来的追问 / 催办才能挂到更早开的那件事上。
+- **额度 / 限流错误 → 立刻停掉本轮**，剩下的单元保持「待处理」留到下一轮；不要逐条重试把额度烧穿。
+- 可运行骨架：`kit/bot.py`（tick）+ `kit/triage.py`（提案）+ `kit/rules.py`（规则即数据），见 `kit/README.md`。
+
+### 2.1 Story 层：把散落的请求聚成「一件真实世界的事」
+
+同一件事经常从好几个地方进来（群里报、私聊催、别人转述、另一个人追问进度）。按单元出提案会把一件事拆成好几条。
+在提案之上加一层 story：
+- 每个新 ask 只用**一次小的 LLM 调用**挂接：只看这个 ask + 最近 N 天（例如 7 天）的候选 story，输出「挂到哪个 / 新开」+ 对象 + 标题。
+- 判定顺序：先抽「对象」（客户 / 功能 / 系统 / 数据集）→ 对象相同且是同一个根问题或同一个交付才挂（催办、问进度、问备份方案、转述反馈、同一事故里的不同动作都算）→
+  **对象不同一定是不同 story**，哪怕提到同一个词 → 同一个人 / 同一个渠道但事情不同 → 不同 story → **拿不准就新开**（宁可拆开，不要错误合并）。
+- 自检：标题写成「<发起人> 要求 <做什么>」；如果需要用「；」「并且」把不同人提的不同事串起来，说明合错了。
+- 单元重新提案前先解绑它的旧引用，把它原来所在的 story 作为**提示**带进重新挂接（稳定，又不锁死）。
+- 纯 FYI / 跳过类的 ask 不开 story；重复的挂到它重复的那个 story 上。
+- 评估过的 story 从面板上消失，有新消息时重新出现（「跳过」类判定会随时间翻案，见 autonomy-and-triage §6）。
+- 可运行骨架：`kit/stories.py`。
+
+### 2.2 加一层，不碰已校准的东西
+
+已经通过校准的 prompt / 规则是一份资产：改一个字就要重跑 N 轮全新校准。新功能（例如 story 归并、摘要、通知分级）优先做成
+**独立的一层、单独的一次调用**，读主流程的输出，而不是往已校准的主 prompt 里加字段。新的一层自己配一个重放脚本
+（用主流程缓存的输出按时间顺序重放历史），单独评估。
 
 ## 3. LLM 调用封装（一个文件，唯一的 runtime 相关点）
 
@@ -40,6 +62,7 @@ codex exec --sandbox read-only --output-schema schema.json - < prompt.txt
 - **嵌套调用必须隔离用户配置**：不加载 skill / MCP / 设置，否则子进程可能命中 skill 并递归调用父脚本。
 - prompt 走 stdin；heredoc 模板用 `<<'EOF'`（否则反引号被吃掉），渲染后 grep 一下最终 prompt。
 - 读 `structured_output`（兜底解析 `result`）；`is_error` 或 `subtype != success` → 抛错；记录每轮花费。
+- 可运行实现：`kit/llm.py`（claude / codex / stub 三个后端；stub 用于离线测试和 dry-run）。
 - 模型分层：闸门 / 分类 / 抽取用小模型，批量提案用中模型，深度调查用大模型。模型和二进制路径都可以用环境变量覆盖。
 - 凭据走一个 shim：长期 token 用环境变量传入；预检额度；备用账号；额度错误的正则要宽。
 - 缓存键 = hash(规则 + prompt)，任何改动自动全部重跑；`--fresh` 绕过缓存。
@@ -71,7 +94,7 @@ codex exec --sandbox read-only --output-schema schema.json - < prompt.txt
 - **状态放 `~/Library/Application Support/<name>/`，日志放 `~/Library/Logs/<name>/`，绝不放 `~/Documents`**（TCC：「自动必挂、手动必成」）。
   后台任务需要读 `~/Documents` 里的 SOP 时，改读云端镜像。
 - 状态文件不进 git（PR 流程里的 `git clean` 会清掉）。
-- `install.sh` 幂等：渲染 plist 模板（`__REPO__/__HOME__` 占位符）→ lint → 重载。
+- `install.sh` 幂等：渲染 plist 模板（`__REPO__/__HOME__` 占位符）→ lint → 重载。现成的：`kit/launchd/install.sh <name> "<command>" [间隔分钟] [偏移]`。
 
 ## 7. 无人值守任务的 prompt 约定（定时任务 / cron 跑的 agent）
 

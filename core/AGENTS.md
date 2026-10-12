@@ -148,7 +148,7 @@
 | 处理别人发来的请求 / 判断该不该接、做到哪 | `playbooks/autonomy-and-triage.md`，skill `triage-ask` |
 | 写消息、文档、报告、给不同读者改写 | `playbooks/communication.md` |
 | 评严重度、找 owner、派单 | `playbooks/severity-and-dispatch.md` |
-| 建 bot / 定时任务 / 流水线 / 调 LLM 的脚本 | `playbooks/automation.md`，skill `ship-automation` |
+| 建 bot / 定时任务 / 流水线 / 调 LLM 的脚本、改规则后校准 | `playbooks/automation.md`，skill `ship-automation`；可运行骨架 `kit/README.md` |
 | 并行派活、管理多个 agent、交接 | `playbooks/multi-agent.md`，skill `handoff-prompt` |
 | 写 memory、维护 KB / SOP、校准、从会话里提炼教训 | `playbooks/knowledge-system.md`，skill `distill-lessons` |
 | 新建或修改 skill | `playbooks/skill-authoring.md`，skill `author-skill` |
