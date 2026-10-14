@@ -21,6 +21,7 @@
 | 「给同事 / 别人也用」 | §6 给别人用 |
 | 「agent 没按框架来」「状态卡没了」「skill 没触发」 | §7 排障 |
 | 「用这套搭个 bot」「改了规则要校准」「做个定时任务」 | `kit/README.md`（可运行骨架） |
+| 「装好了怎么用」「我该怎么说它才会…」「怎么让它少问我」 | 把 `USAGE.md` 的对应章节讲给用户（那是给人看的日常使用说明） |
 
 ## 2. 安装
 
@@ -149,6 +150,7 @@
 | 路径 | 内容 |
 |---|---|
 | `core/AGENTS.md` | 常驻约定（产品本体） |
+| `USAGE.md` | 给人看的日常使用说明 |
 | `playbooks/` | 9 份按需方法：diagnosis · verification-and-closure · autonomy-and-triage · communication · severity-and-dispatch · automation · multi-agent · knowledge-system · skill-authoring |
 | `skills/` | 7 个通用 skill：investigate · close-out · triage-ask · distill-lessons · ship-automation · author-skill · handoff-prompt |
 | `adapters/claude/CLAUDE.md` | Claude Code 全局指令（@import core + 工具映射） |

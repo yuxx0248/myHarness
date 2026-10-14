@@ -4,6 +4,10 @@
 **和 runtime 无关**（Claude Code 与 Codex 用同一份真源），**和领域无关**（不含任何公司、产品、内部工具、人名、客户）。
 领域内容放在框架外的「领域 pack」里，换领域只换 pack。
 
+- **装好后日常怎么用**（怎么说话触发什么、怎么调自主度、怎么纠正、怎么更新）→ [USAGE.md](USAGE.md)
+- **给 agent 的操作说明**（安装、加载方式、改框架的流程、领域 pack、排障）→ [AGENTS.md](AGENTS.md)
+- **用 kit 搭 bot / 做校准** → [kit/README.md](kit/README.md)
+
 ---
 
 ## 分层
@@ -40,7 +44,7 @@ kit/                    可运行骨架（Python 标准库）：llm 封装 · �
 
 ## 安装
 
-给 agent 的完整操作说明（安装、日常使用、改规则、加领域 pack、排障）见 [AGENTS.md](AGENTS.md)。
+给 agent 的完整操作说明（安装、改规则、加领域 pack、排障）见 [AGENTS.md](AGENTS.md)；装好后怎么用见 [USAGE.md](USAGE.md)。
 
 ```bash
 git clone git@github.com:yuxx0248/myHarness.git ~/myHarness
