@@ -4,7 +4,7 @@
 **和 runtime 无关**（Claude Code 与 Codex 用同一份真源），**和领域无关**（不含任何公司、产品、内部工具、人名、客户）。
 领域内容放在框架外的「领域 pack」里，换领域只换 pack。
 
-- **装好后日常怎么用**（怎么说话触发什么、怎么调自主度、怎么纠正、怎么更新）→ [USAGE.md](USAGE.md)
+- **装好后日常怎么用**（怎么说话触发什么、怎么调自主度、怎么纠正、断点续接看板、怎么更新）→ [USAGE.md](USAGE.md)
 - **给 agent 的操作说明**（安装、加载方式、改框架的流程、领域 pack、排障）→ [AGENTS.md](AGENTS.md)
 - **用 kit 搭 bot / 做校准** → [kit/README.md](kit/README.md)
 

@@ -49,6 +49,15 @@ playbook 讲方法，kit 是这些方法的**可运行骨架**：一个「只出
 6. 上 launchd：`kit/launchd/install.sh my-bot "python3 ~/my-bot/tick.py" 10 5`，再 `launchctl kickstart` 在真实上下文里跑一轮、读日志里的正向标记。
 7. 某个分支稳定了，再按分支放权（档位上调 / 允许跨过某个 stop_at）。
 
+## 断点续接看板
+
+```bash
+python3 kit/board.py --text            # 最近 48h 的所有 Claude Code / Codex 会话：等你 / 在跑 / 可归档
+python3 kit/board.py --since 7d --json # 结构化输出
+```
+完整说明（参数、输出怎么读、数据来源、分组配置、过滤规则、排障）见 [USAGE.md 第 6 节](../USAGE.md#6-断点续接看板where-was-i)。
+接入一个新的 harness：在 `board.py` 里写一个 `<name>_sessions(since) -> list[Session]`，登记到 `SOURCES`，在 `tests/test_board.py` 里加一组 fixture。
+
 ## 环境变量
 
 | 变量 | 作用 |

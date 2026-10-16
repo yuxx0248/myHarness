@@ -70,13 +70,109 @@
 1. **开新任务**：一句话 + 链接就够了（`debug <链接>`、「看一下这个 PR」）。agent 自己取材、扫群、写交付物。
 2. **并行跑几条线**：每个会话的标题是 `[工作线] 具体任务`，每轮末尾有状态卡。切回来只看标题和 👉 那一行。
    隔了一段时间回来，说「我回来了」：`where-was-i` 一次性汇总所有会话（Claude 和 Codex 一起）的 👉。
-   也可以直接在终端跑 `python3 ~/myHarness/kit/board.py --text`。
+   也可以直接在终端跑 `python3 ~/myHarness/kit/board.py --text`（详见第 6 节）。
 3. **它卡住了**：阻塞项集中出现在 👉 里，带选项和推荐，你回「1」「执行 A」就行；它不会每一步都来问。
 4. **要发出去的东西**：它只起草。你说「发」才发；发之前它会自己过一遍结案闸。
 5. **收尾**：说「沉淀一下」，看 DIFF，回 `all` / 编号 / `skip`。
 6. **换会话 / 交给别的 agent**：「给我完整的 prompt 让别的 agent 接手」。
 
-## 6. Claude Code 和 Codex 的差别
+## 6. 断点续接看板（where-was-i）
+
+同时追好几条线、隔了一段时间回来时用：一眼看清「现在有几条线、每条到哪了、哪些在等我」。Claude Code 和 Codex 的会话一起看。
+
+### 怎么用
+
+**对 agent 说**（任何 runtime）：「我回来了」「我有哪几条线」「接不上了」「今天还剩什么」「这周做了哪些线」。
+agent 会跑看板脚本，给没有状态卡的会话补一句推断，按下面的格式交给你，最后问你要不要隐藏已完成的。
+
+**自己在终端跑**（不经过 agent，不补推断）：
+
+```bash
+python3 ~/myHarness/kit/board.py --text
+```
+
+| 参数 | 作用 |
+|---|---|
+| `--since 24h` / `--since 7d` | 时间窗（默认 48h，按最近活动时间算） |
+| `--text` | 纯文本：每个会话附「接着做」的命令（`claude --resume <id>` / `codex resume <id>`） |
+| （不加） | Markdown：Claude 桌面端的会话带 `[标题](#local_…)`，在 app 里可点击 |
+| `--json` | 结构化输出（每个会话的状态卡、最后一段回复、transcript 路径），给别的工具 / 页面用 |
+| `--runtime claude` / `--runtime codex` | 只看一种 runtime |
+| `--all` | 不过滤：包含已归档、已隐藏、自动化、定时任务、一次性脚本会话 |
+| `--stale-days 3` | 多少天没活动算「可归档」（默认 3） |
+| `--hide <id> …` | 在看板上隐藏（会话之后有新活动会自动重新出现） |
+| `--exclude <id> …` | 这一次不列入（例如正在跑看板的会话自己） |
+
+### 输出怎么读
+
+```
+10 条线 · 27 个会话 · 5 个在等你（已滤掉：sdk 85、oneshot 31、scheduled 12…）
+
+### 👉 等你        ← 状态卡 👉 行不是「无…」的会话：先处理这一组
+### 🔄 在跑 / 可继续 ← 按工作线分组；行首 🔄 = 进程正在运行
+### ✅ 已完成 / 可归档 ← 状态卡写「已完成 / 可以归档」，或超过 3 天没活动
+```
+- 「（无状态卡，待推断）」：这个会话最后一轮没有状态卡，看板只给出它最后说的话；经过 agent 时会补成 📍⏳👉 并标「(推断)」。
+- 「已滤掉」那一串告诉你哪些会话没上看板、为什么（见下面「过滤规则」）。
+
+### 它从哪读、读什么
+
+全部是**本机只读**，不联网，不调 LLM：
+
+| runtime | 读哪里 | 拿到什么 |
+|---|---|---|
+| Claude Code | `~/.claude/projects/*/*.jsonl` | 标题、cwd、时间、最后一段回复（里面的状态卡） |
+| | `~/.claude/sessions/*.json` | 哪些会话正在运行、最新标题 |
+| | `~/Library/Application Support/Claude/claude-code-sessions/` | 桌面端：是否已归档、app 内链接、每轮摘要 |
+| Codex | `~/.codex/sessions/**/*.jsonl` | cwd、时间、最后一段回复 |
+
+### 让分组更准
+
+工作线按这个顺序取：会话标题开头的 `[xxx]` → 状态卡 📍 行开头的 `[xxx]` → 个人配置的路径映射 → 仓库目录名。
+- Claude 桌面端：前 3 轮内设好 `[工作线] 具体任务` 标题（core §1 已经要求 agent 这样做）。
+- Codex / 不能设标题的 runtime：agent 会把 `[工作线]` 写在 📍 行开头（core §1）。
+- 还想更准，建 `~/.agents/board.json`（可选，参考 `kit/examples/board.example.json`）：
+  ```json
+  {
+    "workline_by_path": {"work/sales": "sales", "work/debug": "debug"},
+    "skip_cwd": [".img-cache"],
+    "automation_prefixes": ["你是值班自动首响"]
+  }
+  ```
+  `workline_by_path`：cwd 包含左边的片段就归到右边的工作线；`skip_cwd`：这些目录里起的会话不上看板；
+  `automation_prefixes`：首句以这些开头的会话算自动化。
+
+### 过滤规则（默认不上看板的）
+
+| 被滤掉的 | 怎么判断的 |
+|---|---|
+| `sdk` | `claude -p` 这类非交互调用 |
+| `scheduled` | 定时任务起的会话 |
+| `automation` | 首句匹配 `automation_prefixes` |
+| `oneshot` | 只有一轮、没有标题、不在桌面端、没在运行（脚本里的单次调用） |
+| `routine` | 同名会话 ≥3 个（例行任务） |
+| `archived` | 在 Claude 桌面端已归档 |
+| `hidden` | 你用 `--hide` 隐藏过，且之后没有新活动 |
+| `skip_cwd` | cwd 匹配配置里的 `skip_cwd` |
+
+想看被滤掉的，加 `--all`。
+
+### 隐藏 vs 归档
+
+- **隐藏**（`--hide`）：只影响看板，任何 runtime 都能用，会话有新活动时自动回来。agent 会先问你再隐藏。
+- **归档**：runtime 自己的功能（Claude 桌面端的会话归档）。agent 只有在你明确确认后才会做。
+
+### 看板不对的时候
+
+| 现象 | 查 |
+|---|---|
+| 某个会话没出现 | 加 `--all` 看它是不是被滤掉了、滤掉的原因；或者时间窗太短（`--since 7d`） |
+| 多了不该出现的脚本会话 | 把它的目录加进 `skip_cwd`，或把它的首句开头加进 `automation_prefixes` |
+| 工作线分错 / 显示成仓库名 | 标题或 📍 行没有 `[工作线]`；或在 `workline_by_path` 里加映射 |
+| 一直显示「无状态卡」 | 那个会话的 agent 没在每轮末尾写状态卡 —— 检查它有没有加载 core（AGENTS.md §7） |
+| Codex 会话没出现 | 确认 `~/.codex/sessions/` 下有 rollout 文件；Codex 的文件格式随版本变化，解析不到时开 issue 补适配器 |
+
+## 7. Claude Code 和 Codex 的差别
 
 | | Claude Code | Codex |
 |---|---|---|
@@ -89,7 +185,7 @@
 | 领域纪律注入 | 领域 pack 的 hook | 写在领域 pack README 里，遇到时读 |
 | 断点续接看板 | 可点击跳转到会话 | 给 `codex resume <id>` 命令；`[工作线]` 写在 📍 行开头 |
 
-## 7. 更新框架
+## 8. 更新框架
 
 ```bash
 cd ~/myHarness && git pull
@@ -104,7 +200,7 @@ cd ~/myHarness && git pull
 
 - 新增了 skill：重跑 `install.sh --apply`，补上新 skill 的软链。
 
-## 8. 常见问题
+## 9. 常见问题
 
 **它还是在可逆的步骤上问我。** 说「这种不用问我」；如果是一整类动作，按第 3 节改 §2 那张表。
 
