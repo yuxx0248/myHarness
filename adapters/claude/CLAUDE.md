@@ -14,7 +14,7 @@ core 里提到的通用动作，在 Claude Code 里这样做：
 | 子 agent / 新上下文 | `Agent` 工具（独立的块在一条消息里并行发出，默认后台运行）；大文件交给子 agent 读 |
 | 给自己定 loop / timer | `/loop`、`ScheduleWakeup`；长期定时用 scheduled-tasks |
 | 提议后续工作给我点 | `spawn_task` chip（顺手发现的范围外问题也用它） |
-| 断点续接 | 读所有未归档会话的状态卡（如果装了 `where-was-i` 一类 skill 就用它） |
+| 断点续接 | skill `where-was-i` → `kit/board.py` 输出 Markdown，`[标题](#local_…)` 在 app 里可点击；会话归档用 app 的会话工具，必须等我确认 |
 | skill 位置 | `~/.claude/skills/`（跨 runtime 的 skill 软链自 `~/.agents/skills/`） |
 | 横切纪律注入 | `~/.claude/settings.json` 的 hooks（领域 pack 可以自带 hook） |
 | 可分享的页面 / 看板 | Artifact，更新时重新发布到同一个 URL |

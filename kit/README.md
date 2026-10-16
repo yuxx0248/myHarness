@@ -14,6 +14,7 @@ playbook 讲方法，kit 是这些方法的**可运行骨架**：一个「只出
 | `calib.py` | 校准 harness：同一条流水线重放金标准 case，逐字段比对；缓存键 = 规则 / prompt 文件的 hash；多产出用 bigram-Jaccard 对回 case | knowledge-system §5 |
 | `stability.sh` | 连续 N 轮全新校准，每轮都必须 0 不一致 | knowledge-system §5 |
 | `render_rules.py` | 把规则导图（+ 校准报告 + 历史 case）渲染成给人审的 HTML | — |
+| `board.py` | 断点续接看板：扫本机 Claude Code / Codex 会话 → 过滤（自动化、一次性脚本、例行、已归档、已隐藏）→ 等你 / 在跑 / 可归档 → 按工作线分组 → Markdown / 纯文本 / JSON。只依赖状态卡约定；每个 harness 一个数据源适配器（`SOURCES`）。个人配置见 `examples/board.example.json` → `~/.agents/board.json` | core §1 状态卡；skill `where-was-i` |
 | `launchd/` | macOS 定时任务模板 + 幂等安装（状态 / 日志不放 `~/Documents`） | automation §6 |
 | `examples/` | 领域无关的规则导图示例、最小的 source 适配器（JSON 收件箱） | — |
 | `tests/` | 离线测试（stub 后端，不调用真实模型）；`scripts/build.sh` 会跑 | — |

@@ -21,7 +21,7 @@ core/AGENTS.md          常驻（每轮都加载，~13KB）：怎么跟我说话
    │    severity-and-dispatch · automation · multi-agent · knowledge-system · skill-authoring
    │
    └─ skills/           按需（关键词触发）：把 playbook 变成可执行步骤，两个 runtime 通用的 SKILL.md
-        investigate · close-out · triage-ask · distill-lessons · ship-automation · author-skill · handoff-prompt
+        investigate · close-out · triage-ask · distill-lessons · ship-automation · author-skill · handoff-prompt · where-was-i
 
 adapters/               runtime 映射：同一个通用动作在 Claude Code / Codex 里分别怎么做
   claude/CLAUDE.md      @import core + Claude 专属（会话标题工具、Agent、hook、Artifact、spawn_task…）
@@ -32,7 +32,8 @@ scripts/build.sh        生成 dist/codex/AGENTS.md；检查体积（Codex 默�
                         领域泄漏（按各 pack 的 leak-terms.txt）、密钥
 scripts/install.sh      默认 dry-run；--apply 才建软链（原配置先备份）；--pack DIR 挂载领域 pack
 tests/scenarios.md      行为回归场景（领域无关）：改了 core / playbook 后用干净子 agent 重跑
-kit/                    可运行骨架（Python 标准库）：llm 封装 · 规则即数据 · 分诊 · story 归并 · tick · 校准 harness · launchd；离线测试
+kit/                    可运行骨架（Python 标准库）：llm 封装 · 规则即数据 · 分诊 · story 归并 · tick · 校准 harness · launchd ·
+                        断点续接看板（board.py，跨 Claude Code / Codex）；离线测试
 ```
 
 设计原则：

@@ -1,0 +1,9 @@
+{
+  "workline_by_path": {
+    "work/sales": "sales",
+    "work/debug": "debug",
+    "work/my-bot": "bot"
+  },
+  "skip_cwd": [".img-cache", "/batch-jobs/"],
+  "automation_prefixes": ["你是自动巡检 agent", "你是工单分诊"]
+}

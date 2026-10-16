@@ -30,6 +30,7 @@
 👉 等你：<要我做的决定或动作；没有就写「无，可以继续 / 可以收尾」>
 ```
 每行一句，尽量短，不重复正文已经展开的细节；任务完成时 ⏳ 写「已完成」，👉 写「可以归档」。
+不能设会话标题的 runtime：把 `[工作线]` 写在 📍 行开头（`📍 目标：[debug] …`）—— 断点续接看板靠它分组。
 （为什么：我经常同时追 3–5 个会话，切回来只看标题和这四行就要能接上。）
 
 ## 2. 自主度：按「动作类型」分级，不按任务分级
@@ -152,4 +153,5 @@
 | 并行派活、管理多个 agent、交接 | `playbooks/multi-agent.md`，skill `handoff-prompt` |
 | 写 memory、维护 KB / SOP、校准、从会话里提炼教训 | `playbooks/knowledge-system.md`，skill `distill-lessons` |
 | 新建或修改 skill | `playbooks/skill-authoring.md`，skill `author-skill` |
+| 我回来了 / 我有哪几条线 / 接不上了 | skill `where-was-i`（脚本 `kit/board.py`，跨 runtime 读所有会话的状态卡） |
 | 具体业务领域、公司内部工具、人和系统 | 已安装的领域 pack：`~/.agents/packs/*/README.md`（按任务挑相关的那个读；框架本身不含任何领域内容） |

@@ -12,7 +12,7 @@
 #
 # 用法：scripts/install.sh [--apply] [--pack DIR]...
 #
-# 回滚：把 *.bak-<时间戳> 改回原名；删掉上面这些软链。
+# 回滚：把 *.bak-<时间戳> 改回原名、把 ~/.agents/backups/<时间戳>/ 里的旧 skill 挪回去；删掉上面这些软链。
 set -euo pipefail
 
 APPLY=0
@@ -56,6 +56,20 @@ backup_and_link() {  # 对单个配置文件：真实文件先备份再换成软
   echo "  + $path → $target"
 }
 
+backup_skill_and_link() {  # skill 目录：旧的真实目录挪到 skills 目录之外备份（留在原处会被当成第二个同名 skill 加载）
+  local target=$1 path=$2
+  if [ -L "$path" ] && [ "$(readlink "$path")" = "$target" ]; then echo "  = $path"; return; fi
+  if [ -e "$path" ] || [ -L "$path" ]; then
+    local bdir="$HOME/.agents/backups/$TS/$(basename "$(dirname "$(dirname "$path")")")-$(basename "$(dirname "$path")")"
+    run mkdir -p "$bdir"
+    run mv "$path" "$bdir/"
+    echo "  ↺ 备份 $path → $bdir/$(basename "$path")"
+  fi
+  run mkdir -p "$(dirname "$path")"
+  run ln -sfn "$target" "$path"
+  echo "  + $path → $target"
+}
+
 echo "== 构建"
 PACK_DIRS="${PACKS[*]:-}" "$ROOT/scripts/build.sh"
 
@@ -65,9 +79,10 @@ link "$ROOT" "$HOME/.agents/framework"
 echo "== skills"
 for d in "$ROOT"/skills/*/; do
   name=$(basename "$d")
-  link "$HOME/.agents/framework/skills/$name" "$HOME/.agents/skills/$name"
-  link "$HOME/.agents/skills/$name" "$HOME/.claude/skills/$name"
-  link "$HOME/.agents/skills/$name" "$HOME/.codex/skills/$name"
+  # 同名的旧 skill（真实目录，不是软链）：先备份再替换 —— 框架里的版本是它的跨 runtime 替代
+  backup_skill_and_link "$HOME/.agents/framework/skills/$name" "$HOME/.agents/skills/$name"
+  backup_skill_and_link "$HOME/.agents/skills/$name" "$HOME/.claude/skills/$name"
+  backup_skill_and_link "$HOME/.agents/skills/$name" "$HOME/.codex/skills/$name"
 done
 
 echo "== 领域 pack"

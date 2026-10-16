@@ -8,7 +8,8 @@ Codex 不支持 `@import`，所以 core 全文内联在下面。框架根目录�
 
 | core 里的动作 | Codex 里 |
 |---|---|
-| 设会话标题 | 不支持；只附状态卡 |
+| 设会话标题 | 不支持；只附状态卡，并把 `[工作线]` 写在 📍 行开头（断点续接看板靠它分组） |
+| 断点续接 | skill `where-was-i` → `python3 ~/.agents/framework/kit/board.py --text`，每个会话附 `codex resume <id>` / `claude --resume <id>` |
 | skill | `~/.codex/skills/<name>/SKILL.md`（软链自 `~/.agents/skills/`）。如果当前版本没有自动加载 skill，就按 §11 的表格在遇到对应场景时自己 `cat` 对应的 SKILL.md |
 | 子 agent / 新上下文 | 没有内置子 agent 时：先用脚本预处理大文件；需要独立上下文就跑一个 `codex exec --sandbox read-only "<自包含 prompt>" > out.md` 子进程，只读它的输出 |
 | 给自己定 loop / timer | 没有内置调度：用 launchd / cron 跑 `codex exec`（按 `playbooks/automation.md` §7 的无人值守约定写 prompt），或在状态卡 👉 里提醒我 |

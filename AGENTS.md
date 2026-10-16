@@ -46,12 +46,12 @@
    - `ls -l ~/.claude/CLAUDE.md ~/.codex/AGENTS.md ~/.agents/framework ~/.agents/skills/investigate` 都指向本仓库。
    - 开一个新的 Claude Code 会话，问「你的状态卡格式是什么、哪些动作要停下等我」—— 回答应来自 `core/AGENTS.md` §1、§2。
    - 装了 Codex 的话：`codex exec --help` 核对 `adapters/codex/header.md` 和 `playbooks/automation.md` 里写的参数名（`--sandbox`、`--output-schema`），不一致就按 §4 改 adapter。
-6. 回滚：把 `*.bak-<时间戳>` 改回原名，删掉 `~/.agents/framework`、`~/.agents/skills/<本仓库的 skill>`、`~/.claude/skills/…`、`~/.codex/skills/…`、`~/.agents/packs/…` 这些软链。
+6. 回滚：把 `*.bak-<时间戳>` 改回原名，把 `~/.agents/backups/<时间戳>/` 里被替换的旧 skill 挪回原处，删掉 `~/.agents/framework`、`~/.agents/skills/<本仓库的 skill>`、`~/.claude/skills/…`、`~/.codex/skills/…`、`~/.agents/packs/…` 这些软链。
 
 安装后的样子：
 ```
 ~/.agents/framework      → ~/myHarness
-~/.agents/skills/<x>     → ~/.agents/framework/skills/<x>     （7 个通用 skill）
+~/.agents/skills/<x>     → ~/.agents/framework/skills/<x>     （8 个通用 skill；同名的旧 skill 目录先挪到 ~/.agents/backups/<时间戳>/）
 ~/.claude/skills/<x>     → ~/.agents/skills/<x>
 ~/.codex/skills/<x>      → ~/.agents/skills/<x>
 ~/.agents/packs/<name>   → 领域 pack 目录
@@ -152,12 +152,12 @@
 | `core/AGENTS.md` | 常驻约定（产品本体） |
 | `USAGE.md` | 给人看的日常使用说明 |
 | `playbooks/` | 9 份按需方法：diagnosis · verification-and-closure · autonomy-and-triage · communication · severity-and-dispatch · automation · multi-agent · knowledge-system · skill-authoring |
-| `skills/` | 7 个通用 skill：investigate · close-out · triage-ask · distill-lessons · ship-automation · author-skill · handoff-prompt |
+| `skills/` | 8 个通用 skill：investigate · close-out · triage-ask · distill-lessons · ship-automation · author-skill · handoff-prompt · where-was-i |
 | `adapters/claude/CLAUDE.md` | Claude Code 全局指令（@import core + 工具映射） |
 | `adapters/codex/header.md`、`footer.md` | Codex 全局指令的头尾（build 时夹住 core） |
 | `domain-packs/` | 领域 pack 规范 + 模板（pack 本身不在仓库里） |
 | `scripts/build.sh` | 生成 `dist/codex/AGENTS.md` + 体检 |
 | `scripts/install.sh` | 安装 / 挂 pack（默认 dry-run） |
 | `tests/scenarios.md` | 行为回归场景 |
-| `kit/` | 可运行骨架：LLM 封装、规则导图、分诊、story 归并、tick、校准 harness、launchd 模板（见 `kit/README.md`） |
+| `kit/` | 可运行骨架：LLM 封装、规则导图、分诊、story 归并、tick、校准 harness、launchd 模板、断点续接看板（见 `kit/README.md`） |
 | `dist/` | 生成物（不进 git） |

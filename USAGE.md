@@ -29,6 +29,7 @@
 | 「给我完整的 prompt 让别的 agent 接手」· 「开个新 session 继续」 | 生成一段可直接粘贴的交接 prompt：已证实 / 已否决 / 当前状态 / 下一步 / 约束 / 验收 | skill `handoff-prompt` |
 | 「做个 bot」· 「每 10 分钟扫一次」· 「为什么自动跑就挂」 | 按检查单设计：确定性优先、静默失败防护、kill switch、首次播种、只出提案；能复用 `kit/` 就复用 | skill `ship-automation` + `kit/` |
 | 「写个 skill」· 「这个 skill 没触发」 | 先找现成的，按约定写薄索引 + 关键词 description，出 DIFF，用真实说法测触发 | skill `author-skill` |
+| 「我回来了」· 「我有哪几条线」· 「接不上了」· 「这周做了哪些线」 | 扫本机所有 Claude Code / Codex 会话，按工作线列出：👉 等你的 / 🔄 在跑的 / ✅ 可归档的，带链接或「接着做」的命令 | skill `where-was-i` + `kit/board.py` |
 | 「报告进度」· 「pause」· 「resume」 | 完成了什么 / 没做什么 / 卡在什么 / 需要你做什么；暂停或继续 | core §1 |
 | 什么都不说，只是切回这个会话 | 看标题和最后的状态卡就能接上（👉 那一行就是等你的事） | core §1 |
 
@@ -68,7 +69,8 @@
 
 1. **开新任务**：一句话 + 链接就够了（`debug <链接>`、「看一下这个 PR」）。agent 自己取材、扫群、写交付物。
 2. **并行跑几条线**：每个会话的标题是 `[工作线] 具体任务`，每轮末尾有状态卡。切回来只看标题和 👉 那一行。
-   Claude 桌面端可以装一个 `where-was-i` 类的 skill，一次性汇总所有未归档会话的 👉。
+   隔了一段时间回来，说「我回来了」：`where-was-i` 一次性汇总所有会话（Claude 和 Codex 一起）的 👉。
+   也可以直接在终端跑 `python3 ~/myHarness/kit/board.py --text`。
 3. **它卡住了**：阻塞项集中出现在 👉 里，带选项和推荐，你回「1」「执行 A」就行；它不会每一步都来问。
 4. **要发出去的东西**：它只起草。你说「发」才发；发之前它会自己过一遍结案闸。
 5. **收尾**：说「沉淀一下」，看 DIFF，回 `all` / 编号 / `skip`。
@@ -85,6 +87,7 @@
 | 定时 / loop | `/loop`、定时任务 | launchd / cron 跑 `codex exec` |
 | memory | 自带 auto memory | 写到 `~/.agents/memory/`（先出 DIFF） |
 | 领域纪律注入 | 领域 pack 的 hook | 写在领域 pack README 里，遇到时读 |
+| 断点续接看板 | 可点击跳转到会话 | 给 `codex resume <id>` 命令；`[工作线]` 写在 📍 行开头 |
 
 ## 7. 更新框架
 
